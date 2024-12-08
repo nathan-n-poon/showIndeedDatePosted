@@ -1,0 +1,28 @@
+{
+    "manifest_version": 2,
+    "name": "Borderify",
+    "version": "1.0",
+  
+    "description": "Adds a red border to all webpages matching mozilla.org.",
+  
+    "icons": {
+      "48": "icons/:3.svg"
+    },
+  
+    "content_scripts": [
+      {
+        "matches": ["https://ca.indeed.com/*", "https://ca.indeed.com/viewjob*", "https://www.mozilla.org/en-US/"],
+        "js": ["borderify.js"],
+        "run_at": "document_idle"
+      }
+    ],
+
+    "permissions": ["activeTab"],
+
+    "web_accessible_resources": [
+        "beasts/frog.jpg",
+        "beasts/turtle.jpg",
+        "beasts/snake.jpg"
+      ]
+  }
+  
