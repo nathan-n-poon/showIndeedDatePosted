@@ -61,3 +61,16 @@ function main() {
 
 main()
 
+//todo: for index and jobs, make reload every time url param changes
+
+// get job-full-details. title: jobsearch-JobInfoHeader-title, inlineHeader-companyName <a>, inlineHeader-companyLocation
+// normalize and collate data
+
+// for index: look at innerhtml of id: mosaic-data, 
+// iteratively slice: "company":, "displayTitle":, "formattedLocation":
+// see if normalized and collated matches with job-full-details
+// if so, get formattedRelativeTime
+
+// for jobs: same as above
+
+// for viewjob: just look at innerhtml, key: "age"
