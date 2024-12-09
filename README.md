@@ -1,0 +1,3 @@
+> The causes lie deep and simple—the causes are a hunger in a stomach, multiplied a million times; a hunger in a single soul, hunger for joy and some security, multiplied a million times; muscles and mind aching to grow, to work, to create, multiplied a million times. The last clear definite function of man—muscles aching to work, minds aching to create beyond the single need—this is man. To build a wall, to build a house, a dam, and in the wall and house and dam to put something of Manself, and to Manself take back something of the wall, the house, the dam; to take hard muscles from the lifting, to take the clear lines and form from conceiving.  
+
+\- John Steinbeck
