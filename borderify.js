@@ -33,11 +33,23 @@ function waitTilReady() {
         return;
     }
     console.log("DONE WAITING: " + wait1 + wait2.innerHTML + wait3);
+    let infoBox = document.createElement('div');
+    infoBox.setAttribute("id", "infoBox");
+    infoBox.style.backgroundColor = "blue";
+    infoBox.style.height = "200px";
+    infoBox.style.width = "200px";
+    infoBox.style.position = "fixed";
+    infoBox.style.bottom = 0;
+    infoBox.style.right = 0;
+    infoBox.style.opacity = 0.8;
+    let text = document.createElement('p');
+    infoBox.appendChild(text);
+    document.body.appendChild(infoBox);
     main();
 }
 
 
-function main() {
+function main(infoBox) {
     var detailsAndDate = [];
 
     let url = window.location.href;
@@ -47,7 +59,7 @@ function main() {
     ) {
         console.log("DEBUG: not in viewjob");
         let details = getSpotlightJobDetails();
-        console.log("after details");
+        console.log("gotten details: " + details[0]);
         let datePosted = rootAndJobsGetDatePosted(details);
         details.push(datePosted);
         detailsAndDate = details
@@ -61,29 +73,22 @@ function main() {
     }
     console.log(detailsAndDate)
 
-    createInfoBox(detailsAndDate);
+    updateInfoBox(infoBox, detailsAndDate);
 }
 waitTilReady();
 
+var lastURL = window.location.href;
+window.addEventListener("click", function(){
+    if (window.location.href != lastURL) {
+        waitTilReady();
+    }
+  });
 
 
-function createInfoBox(detailsAndDate){
-    let infoBox = document.createElement('div');
-    infoBox.setAttribute("id", "infoBox");
-    infoBox.style.backgroundColor = "blue";
-    infoBox.style.height = "200px";
-    infoBox.style.width = "200px";
-    infoBox.style.position = "fixed";
-    infoBox.style.bottom = 0;
-    infoBox.style.right = 0;
-    infoBox.style.opacity = 0.8;
 
-    let text = document.createElement('p');
-    text.textContent = detailsAndDate.join();
-    // text.style.marginTop = Math.random()*200;
-    infoBox.appendChild(text);
-
-    document.body.appendChild(infoBox);
+function updateInfoBox(infoBox, detailsAndDate){
+    console.log("updating")
+    document.getElementById("infoBox").textContent = detailsAndDate.join();
 }
 
 
@@ -97,8 +102,11 @@ function getSpotlightJobDetails() {
     console.log("DEBUG " + document.querySelector('[data-testid=inlineHeader-companyName]'));
     let companyNameContainer1 = document.querySelector('[data-testid=inlineHeader-companyName]');
     // <a href="privacy_destroying_link" ...>Company Name<svg etc></svg></a>
-    let companyNameContainer2 = companyNameContainer1.querySelector("a").innerHTML;
-    let company = extractValue(companyNameContainer2, "", `<svg`);
+    var company = companyNameContainer1.querySelector("a").text;
+    // let company = extractValue(companyNameContainer2, "", `<svg`);
+    if (company.search(".css") != -1) {
+        company = company.slice(0, company.search(".css"))
+    }
 
     let location = document.querySelector('[data-testid=inlineHeader-companyLocation]').innerText;
     
