@@ -25,31 +25,30 @@ function waitTilReady() {
     var wait1 = document.querySelector('[data-testid=jobsearch-JobInfoHeader-title]');
     var wait2 = document.querySelector('[data-testid=inlineHeader-companyName]');
     var wait3 = document.querySelector(`[data-testid=inlineHeader-companyLocation]`);
-    if((wait1 == undefined || wait2 == undefined || wait3 == undefined)) {
+    if((wait1 == undefined || !wait2 || wait3 == undefined)) {
         //The node we need does not exist yet.
         //Wait 500ms and try again
         console.log("waiting")
         window.setTimeout(waitTilReady, 500);
         return;
     }
-    console.log("DONE WAITING: " + wait1 + wait2.innerHTML + wait3);
-    let infoBox = document.createElement('div');
-    infoBox.setAttribute("id", "infoBox");
-    infoBox.style.backgroundColor = "blue";
-    infoBox.style.height = "200px";
-    infoBox.style.width = "200px";
-    infoBox.style.position = "fixed";
-    infoBox.style.bottom = 0;
-    infoBox.style.right = 0;
-    infoBox.style.opacity = 0.8;
-    let text = document.createElement('p');
-    infoBox.appendChild(text);
-    document.body.appendChild(infoBox);
+    var wait4 = wait2.textContent;
+    if (wait4.search(".css") != -1) {
+        wait4 = wait4.slice(0, wait4.search(".css"))
+    }
+    if(!wait4) {
+        //The node we need does not exist yet.
+        //Wait 500ms and try again
+        console.log("waiting")
+        window.setTimeout(waitTilReady, 500);
+        return;
+    }
+    console.log("DONE WAITING: " + wait1 + wait2 + wait3);
     main();
 }
 
 
-function main(infoBox) {
+function main() {
     var detailsAndDate = [];
 
     let url = window.location.href;
@@ -59,7 +58,7 @@ function main(infoBox) {
     ) {
         console.log("DEBUG: not in viewjob");
         let details = getSpotlightJobDetails();
-        console.log("gotten details: " + details[0]);
+        console.log("gotten details: " + details);
         let datePosted = rootAndJobsGetDatePosted(details);
         details.push(datePosted);
         detailsAndDate = details
@@ -73,20 +72,42 @@ function main(infoBox) {
     }
     console.log(detailsAndDate)
 
-    updateInfoBox(infoBox, detailsAndDate);
+    updateInfoBox(normalize(detailsAndDate));
 }
+
+let infoBox = document.createElement('div');
+    infoBox.setAttribute("id", "infoBox");
+    infoBox.style.backgroundColor = "blue";
+    infoBox.style.height = "200px";
+    infoBox.style.width = "200px";
+    infoBox.style.position = "fixed";
+    infoBox.style.bottom = 0;
+    infoBox.style.right = 0;
+    infoBox.style.opacity = 0.8;
+    let text = document.createElement('p');
+    infoBox.appendChild(text);
+    document.body.appendChild(infoBox);
 waitTilReady();
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 var lastURL = window.location.href;
-window.addEventListener("click", function(){
+window.addEventListener("mousedown", async function(){
+    console.log("CLICK!")
+    await sleep(400);
+    console.log(window.location.href)
+    console.log(lastURL)
     if (window.location.href != lastURL) {
+        console.log("registered update")
         waitTilReady();
+        lastURL = window.location.href
+
     }
-  });
+});
 
-
-
-function updateInfoBox(infoBox, detailsAndDate){
+function updateInfoBox(detailsAndDate){
     console.log("updating")
     document.getElementById("infoBox").textContent = detailsAndDate.join();
 }
@@ -102,7 +123,8 @@ function getSpotlightJobDetails() {
     console.log("DEBUG " + document.querySelector('[data-testid=inlineHeader-companyName]'));
     let companyNameContainer1 = document.querySelector('[data-testid=inlineHeader-companyName]');
     // <a href="privacy_destroying_link" ...>Company Name<svg etc></svg></a>
-    var company = companyNameContainer1.querySelector("a").text;
+    var company = companyNameContainer1.textContent;
+    console.log("THE COMPANY IS: " + company)
     // let company = extractValue(companyNameContainer2, "", `<svg`);
     if (company.search(".css") != -1) {
         company = company.slice(0, company.search(".css"))
@@ -113,24 +135,33 @@ function getSpotlightJobDetails() {
     return [title, company, location];
 }
 
-// requisite: formattedRelativeTime (what we are looking for) must come after all of title, company, and location
+function strikeThrough(text) {
+    return text
+      .split('')
+      .map(char => char + '\u0336')
+      .join('')
+  }
+
+// requisite: order of fields is company, title, location, date
 function rootAndJobsGetDatePosted(matchTarget) {
     var grepThis = document.getElementById("mosaic-data").innerHTML;
-    for (var i = 0; i < 20; i++) {
-        var advancedIndex = Math.max(
-            grepThis.search(`"displayTitle":`),
-            grepThis.search(`"company":`),
-            grepThis.search(`"formattedLocation":`),
-        );
-        if (advancedIndex == -1) {
-            error("uh oh");
-            return;
+    while(true) {
+        console.log(grepThis);
+        if (grepThis.search(`"formattedLocation":`) == -1) {
+            console.log("ALERTING")
+            alert(`Uh oh!  Loading new content into the same page will not retrieve any new date posted info!\n SOL.  Best you can do now is open these postings in their own page or ` 
+            + strikeThrough("submit a PR") +
+            ` write your own plugin because this is a steaming mess!`);
+            document.body.removeChild(infoBox);
+            return
         }
+        console.log(grepThis.search(`"company":`), grepThis.search(`"displayTitle":`),  grepThis.search(`"formattedLocation":`))
 
         var displayTitle = extractValue(grepThis, `"displayTitle":"`, entryDelimiter);
         var company = extractValue(grepThis, `"company":"`, entryDelimiter);
         var location = extractValue(grepThis, `"formattedLocation":"`, entryDelimiter);
 
+        advancedIndex = grepThis.search(`"formattedLocation":`) + `"formattedLocation":`.length + location.length;
         console.log("ADVANCED INDEX IS " + advancedIndex);
         grepThis = grepThis.slice(advancedIndex);
 
@@ -144,9 +175,11 @@ function rootAndJobsGetDatePosted(matchTarget) {
 }
 
 function checkSameJobRef(spotlightDetails, scriptExtractDetails) {
-    let matchTitle = spotlightDetails[0] == scriptExtractDetails[0];
-    let matchCompany = spotlightDetails[1] == spotlightDetails[1];
-    let matchLocation = spotlightDetails[2].search(scriptExtractDetails[2]) != -1;
+    normalizedSpotlightDetails = normalize(spotlightDetails);
+    normalizedScriptExtractDetails = normalize(scriptExtractDetails)
+    let matchTitle = normalizedSpotlightDetails[0] == normalizedScriptExtractDetails[0];
+    let matchCompany = normalizedSpotlightDetails[1] == normalizedScriptExtractDetails[1];
+    let matchLocation = normalizedSpotlightDetails[2].search(normalizedScriptExtractDetails[2]) != -1;
 
     return matchTitle && matchCompany && matchLocation;
 }
@@ -166,11 +199,11 @@ function viewJobGetDatePosted() {
 // for some reason some characters are alternatingly encoded either directly or as unicode id
 // so far all I have found is slash '/'
 // cant be bothered to figure out where it occurs so imma equally apply this on everything
-function normalizer(input) {
-    var stringCollector = "";
+function normalize(input) {
+    ret = []
     for (var i = 0; i < input.length; i++) {
-        stringCollector += input[i]; 
+        ret.push(input[i].replaceAll('\\u002', '\/').replaceAll('&amp;', '&'))
     }
-    return stringCollector.replaceAll('\\u002', '\/')
+    return ret
 }
 
