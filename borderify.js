@@ -1,44 +1,73 @@
+//todo: for index and jobs, make reload every time url param changes
+
 function error(errMsg) {
     alert(errMsg + " :(")
 }
 
-function getValue(dict, key) {
-    let keyLocation = dict.search(key);
-    let lenKey = key.length;
+// "formattedLocation":"City, Province","
+let entryDelimiter = `","`;
 
-    // 1 = len("\"")
-    let start = dict.slice(keyLocation+lenKey).search("\"");
-    let end = dict.slice(keyLocation+lenKey+start+1).search("\"");
-    let val = dict.slice(keyLocation+lenKey+start+1, keyLocation+lenKey+start+end+1);
-    return val
+const Subdirectory = Object.freeze({
+    ROOT:   Symbol("root"),
+    JOBS:  Symbol("job"),
+    VIEWJOB: Symbol("viewjob")
+});
+
+
+function extractValue(dict, leftBound, rightBound) {
+    let leftIndex = dict.search(leftBound) + leftBound.length;
+    let rightIndex = dict.slice(leftIndex).search(rightBound);
+
+    return dict.slice(leftIndex, leftIndex+rightIndex);
 }
 
+function waitTilReady() {
+    var wait1 = document.querySelector('[data-testid=jobsearch-JobInfoHeader-title]');
+    var wait2 = document.querySelector('[data-testid=inlineHeader-companyName]');
+    var wait3 = document.querySelector(`[data-testid=inlineHeader-companyLocation]`);
+    if((wait1 == undefined || wait2 == undefined || wait3 == undefined)) {
+        //The node we need does not exist yet.
+        //Wait 500ms and try again
+        console.log("waiting")
+        window.setTimeout(waitTilReady, 500);
+        return;
+    }
+    console.log("DONE WAITING: " + wait1 + wait2.innerHTML + wait3);
+    main();
+}
+
+
 function main() {
+    var detailsAndDate = [];
 
-    let theChildren = document.body.children;
-    var theChild;
-    for (var i = 0; i < theChildren.length; i++) {
-        if (theChildren[i].tagName == "SCRIPT" && theChildren[i].id == "") {
-            theChild = theChildren[i];
-            break;
-        }
+    let url = window.location.href;
+    if (url == `https://ca.indeed.com/` || 
+        url.search(`https://ca.indeed.com/\\?`) != -1 ||
+        url.search(`https://ca.indeed.com/jobs`) != -1
+    ) {
+        console.log("DEBUG: not in viewjob");
+        let details = getSpotlightJobDetails();
+        console.log("after details");
+        let datePosted = rootAndJobsGetDatePosted(details);
+        details.push(datePosted);
+        detailsAndDate = details
     }
-    let source = theChild.innerHTML;
-
-    let postedDate = getValue(source, "\"age\"");
-    console.log(postedDate);
-
-    // this data isnt hidden, but its displayed for user sanity check
-    let jobTitle = getValue(source, "\"jobTitle\"");
-    console.log(jobTitle);
-
-    if (postedDate == "") {
-        console.log("empty");
-        return
+    else if (url.search(`https://ca.indeed.com/viewjob`) != -1) {
+        console.log("DEBUG: In viewjob");
+        detailsAndDate = viewJobGetDatePosted();
+    } 
+    else {
+        error("cant work on this page");
     }
+    console.log(detailsAndDate)
 
-    console.log("creating");
+    createInfoBox(detailsAndDate);
+}
+waitTilReady();
 
+
+
+function createInfoBox(detailsAndDate){
     let infoBox = document.createElement('div');
     infoBox.setAttribute("id", "infoBox");
     infoBox.style.backgroundColor = "blue";
@@ -50,27 +79,90 @@ function main() {
     infoBox.style.opacity = 0.8;
 
     let text = document.createElement('p');
-    text.textContent = postedDate;
-    text.style.marginTop = Math.random()*200;
+    text.textContent = detailsAndDate.join();
+    // text.style.marginTop = Math.random()*200;
     infoBox.appendChild(text);
 
     document.body.appendChild(infoBox);
-    console.log("done creating");
-
 }
 
-main()
 
-//todo: for index and jobs, make reload every time url param changes
-
-// get job-full-details. title: jobsearch-JobInfoHeader-title, inlineHeader-companyName <a>, inlineHeader-companyLocation
+// get the details of current spotlighted job posting
 // normalize and collate data
+function getSpotlightJobDetails() {
+    let titleContainer = document.querySelector('[data-testid=jobsearch-JobInfoHeader-title]').innerHTML;
+    // <span>Title<span class="css-1b6omqv esbq1260"> - job post</span></span>
+    let title = extractValue(titleContainer, `<span>`, `<span`);
 
-// for index: look at innerhtml of id: mosaic-data, 
-// iteratively slice: "company":, "displayTitle":, "formattedLocation":
-// see if normalized and collated matches with job-full-details
-// if so, get formattedRelativeTime
+    console.log("DEBUG " + document.querySelector('[data-testid=inlineHeader-companyName]'));
+    let companyNameContainer1 = document.querySelector('[data-testid=inlineHeader-companyName]');
+    // <a href="privacy_destroying_link" ...>Company Name<svg etc></svg></a>
+    let companyNameContainer2 = companyNameContainer1.querySelector("a").innerHTML;
+    let company = extractValue(companyNameContainer2, "", `<svg`);
 
-// for jobs: same as above
+    let location = document.querySelector('[data-testid=inlineHeader-companyLocation]').innerText;
+    
+    return [title, company, location];
+}
 
-// for viewjob: just look at innerhtml, key: "age"
+// requisite: formattedRelativeTime (what we are looking for) must come after all of title, company, and location
+function rootAndJobsGetDatePosted(matchTarget) {
+    var grepThis = document.getElementById("mosaic-data").innerHTML;
+    for (var i = 0; i < 20; i++) {
+        var advancedIndex = Math.max(
+            grepThis.search(`"displayTitle":`),
+            grepThis.search(`"company":`),
+            grepThis.search(`"formattedLocation":`),
+        );
+        if (advancedIndex == -1) {
+            error("uh oh");
+            return;
+        }
+
+        var displayTitle = extractValue(grepThis, `"displayTitle":"`, entryDelimiter);
+        var company = extractValue(grepThis, `"company":"`, entryDelimiter);
+        var location = extractValue(grepThis, `"formattedLocation":"`, entryDelimiter);
+
+        console.log("ADVANCED INDEX IS " + advancedIndex);
+        grepThis = grepThis.slice(advancedIndex);
+
+        let collatedDetails = [displayTitle, company, location];
+        console.log((matchTarget + "\n" +collatedDetails))
+        if (checkSameJobRef(matchTarget, collatedDetails)) {
+            break;
+        }
+    }
+    return extractValue(grepThis, `"formattedRelativeTime":"`, entryDelimiter)
+}
+
+function checkSameJobRef(spotlightDetails, scriptExtractDetails) {
+    let matchTitle = spotlightDetails[0] == scriptExtractDetails[0];
+    let matchCompany = spotlightDetails[1] == spotlightDetails[1];
+    let matchLocation = spotlightDetails[2].search(scriptExtractDetails[2]) != -1;
+
+    return matchTitle && matchCompany && matchLocation;
+}
+
+function viewJobGetDatePosted() {
+    let source = document.body.innerHTML;
+    let postedDate = extractValue(source, `"age":`, entryDelimiter);
+
+    // this data isnt hidden, but its displayed for user sanity check
+    let jobTitle = extractValue(source, `"jobTitle":`, entryDelimiter);
+    let companyName = extractValue(source, `"companyName":`, entryDelimiter);
+    let location = extractValue(source, `"formattedLocation":`, entryDelimiter);
+
+    return [jobTitle, companyName, location, postedDate];
+}
+
+// for some reason some characters are alternatingly encoded either directly or as unicode id
+// so far all I have found is slash '/'
+// cant be bothered to figure out where it occurs so imma equally apply this on everything
+function normalizer(input) {
+    var stringCollector = "";
+    for (var i = 0; i < input.length; i++) {
+        stringCollector += input[i]; 
+    }
+    return stringCollector.replaceAll('\\u002', '\/')
+}
+

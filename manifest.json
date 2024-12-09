@@ -12,8 +12,7 @@
     "content_scripts": [
       {
         "matches": ["https://ca.indeed.com/*", "https://ca.indeed.com/viewjob*", "https://www.mozilla.org/en-US/"],
-        "js": ["borderify.js"],
-        "run_at": "document_idle"
+        "js": ["borderify.js"]
       }
     ],
 
