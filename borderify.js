@@ -10,7 +10,8 @@ let entryDelimiter = `","`;
 const Subdirectory = Object.freeze({
     ROOT:   Symbol("root"),
     JOBS:  Symbol("job"),
-    VIEWJOB: Symbol("viewjob")
+    VIEWJOB: Symbol("viewjob"),
+    INCOMPATIBLE: Symbol("incompatible")
 });
 
 
@@ -35,23 +36,36 @@ function waitTilReady(firstWaitGroup, finallyExecute) {
     finallyExecute();
 }
 
+function getSubdirectory() {
+    const url = window.location.href
+    if (url == `https://ca.indeed.com/` || 
+        url.search(`https://ca.indeed.com/\\?`) != -1
+    ) {
+        return Subdirectory.ROOT;
+    }
+    if (url.search(`https://ca.indeed.com/jobs`) != -1) {
+        return Subdirectory.JOBS;
+    }
+    if (url.search(`https://ca.indeed.com/viewjob`) != -1) {
+        return Subdirectory.VIEWJOB;
+    }
+    return Subdirectory.INCOMPATIBLE;
+}
 
 function displayInfo() {
     console.log("displaying info!")
     var detailsAndDate = [];
 
     let url = window.location.href;
-    if (url == `https://ca.indeed.com/` || 
-        url.search(`https://ca.indeed.com/\\?`) != -1 ||
-        url.search(`https://ca.indeed.com/jobs`) != -1
-    ) {
+    let subDir = getSubdirectory()
+    if (subDir == Subdirectory.ROOT || subDir == Subdirectory.JOBS) {
         let details = getSpotlightJobDetails();
         //console.log("gotten details: " + details);
         let datePosted = rootAndJobsGetDatePosted(details);
         details.push(datePosted);
         detailsAndDate = details
     }
-    else if (url.search(`https://ca.indeed.com/viewjob`) != -1) {
+    else if (subDir == Subdirectory.VIEWJOB) {
         detailsAndDate = viewJobGetDatePosted();
     } 
     else {
@@ -76,60 +90,60 @@ function init() {
     infoBox.appendChild(text);
     document.body.appendChild(infoBox);
 
-    const targetNode = document.getElementById("job-full-details");
-    //console.log("CHANGEVIEW MONITOR IS " + targetNode);
+    var lastURL = window.location.href;
+    window.addEventListener("mousedown", async function(){
+        console.log("CLICK!")
+        await sleep(400);
+        console.log(window.location.href)
+        console.log(lastURL)
+        if (window.location.href != lastURL) {
+            console.log("registered update")
+            waitTilReady(necessaryWaitItems(), displayInfo);
+            lastURL = window.location.href
+        }
+    });
 
-    // Options for the observer (which mutations to observe)
-    const config = { attributes: true, childList: true, subtree: true, CharacterData: true };
-
-    // Callback function to execute when mutations are observed
-    const callback = 
-        async function(){
-            console.log("CLICK!")
-            await sleep(400);
-            // if (window.location.href != lastURL) {
-            //     //console.log("registered update")
-                waitTilReady(necessaryWaitItems(), displayInfo);
-                // lastURL = window.location.href
-    
-            // }
-    };
-
-    // Create an observer instance linked to the callback function
-    const observer = new MutationObserver(callback);
-
-    // Start observing the target node for configured mutations
-    observer.observe(targetNode, config);
-
-    displayInfo()
+    displayInfo();
 }
 
+console.log("HERE!")
 const companyWait  =  () => {return document.querySelector('[data-testid=inlineHeader-companyName]')};
 function necessaryWaitItems() {
     var wait1 = () => {return document.querySelector('[data-testid=jobsearch-JobInfoHeader-title]')};
     var wait2 = companyWait;
     var wait3 = () => {return document.querySelector(`[data-testid=inlineHeader-companyLocation]`)};
-    var wait5 = () => {return document.getElementById("job-full-details")};
+    var wait5 = () => {
+        let subDir = getSubdirectory();
+        if (subDir == Subdirectory.ROOT) {
+            return document.getElementById("job-full-details");
+        }
+        if (subDir == Subdirectory.JOBS) {
+            return document.getElementById("jobsearch-ViewjobPaneWrapper");
+        }
+        if (subDir == Subdirectory.VIEWJOB) {
+            return true;
+        }
+    };
 
     return [wait1, wait2, wait3, wait5];
 }
 
-waitTilReady(necessaryWaitItems(), function () {
-    var wait4 =
-        function () {
-            //console.log("IN 4!!!!!!")
-            var wait = companyWait().textContent;
-            if (wait.search(".css") != -1) {
-                wait = wait.slice(0, wait.search(".css"))
-            }
-            return wait;
-    };
-    waitTilReady([wait4], init);
-});
+if (getSubdirectory() != Subdirectory.INCOMPATIBLE) {
+    waitTilReady(necessaryWaitItems(), function () {
+        var wait4 =
+            function () {
+                //console.log("IN 4!!!!!!")
+                var wait = companyWait().textContent;
+                if (wait.search(".css") != -1) {
+                    wait = wait.slice(0, wait.search(".css"))
+                }
+                return wait;
+        };
+        console.log("HERE 2!")
+        waitTilReady([wait4], init);
+    });
+}
 
-window.addEventListener("mousedown", () => {
-    console.log(document.getElementById("job-full-details"))
-})
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
