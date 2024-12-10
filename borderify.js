@@ -30,6 +30,7 @@ function waitTilReady(firstWaitGroup, finallyExecute) {
     }
     if (!ready) {
         //console.log("waiting")
+        infoBox.querySelector('p').textContent = "loading";
         window.setTimeout(function(){waitTilReady(firstWaitGroup, finallyExecute)}, 500);
         return;
     }
@@ -76,24 +77,109 @@ function displayInfo() {
     updateInfoBox(normalize(detailsAndDate));
 }
 
-const infoBox = document.createElement('div');
-function init() {
-    infoBox.setAttribute("id", "infoBox");
-    infoBox.style.backgroundColor = "blue";
-    infoBox.style.height = "200px";
-    infoBox.style.width = "200px";
-    infoBox.style.position = "fixed";
-    infoBox.style.bottom = 0;
-    infoBox.style.right = 0;
-    infoBox.style.opacity = 0.8;
+var buttonState = true;
+function styleInfoBox() {
     let text = document.createElement('p');
+    text.style.color = "white";
     infoBox.appendChild(text);
+
+    const size = 200;
+    const buttonSize = 50;
+
+    infoBox.style.cssText = `
+    background-color: #5acffb;
+    height: ${size}px;
+    width: ${size}px;
+    position: fixed;
+    bottom: 0;
+    right: ${buttonSize/2}px;
+    padding: 10px;
+    border-radius: 10px;
+    `;
+
+    minButton.setAttribute("id", "min_button");
+    minButton.style.cssText = `
+    background-color: #f5abb9;
+    height: ${buttonSize}px;
+    width: ${buttonSize}px;
+    border-radius: 50%;
+    border: 0px;
+    position: fixed;
+    bottom: ${size-buttonSize/4}px;
+    right: ${buttonSize/4}px;
+    cursor: pointer;
+    transition: transform .7s ease-in-out;
+    `
+
+    const buttonIcon = document.createElement('span');
+    buttonIcon.textContent = "-";
+    buttonIcon.style.cssText = `
+        color: white;
+        font-size: 50px;
+        position: relative;
+        bottom: 10px;
+    `
+    minButton.addEventListener("click", () => {
+        buttonState = !buttonState;
+        if (buttonState) {
+            infoBox.style.display = "block";
+            refreshButton.style.display = "block";
+            buttonIcon.textContent = "-"
+        } else {
+            infoBox.style.display = "none"
+            refreshButton.style.display = "none"
+            buttonIcon.textContent = "+"
+        }
+    })
+
+    minButton.appendChild(buttonIcon)
+
+    refreshButton.setAttribute("id", "refresh_button") 
+    refreshButton.src = browser.runtime.getURL("icons/refresh.png")
+    refreshButton.style.cssText = `
+    width: ${buttonSize/2}px;
+    height: ${buttonSize/2}px;
+    position: fixed;
+    bottom: ${size-buttonSize}px;
+    right: ${buttonSize/4}px;
+    background-color: #f5abb9;
+    border-radius: 50%;
+    transition: transform .7s ease-in-out;
+    cursor: pointer;
+    `
+
+    const cssHoverEffects = `
+    #refresh_button:hover {
+        transform: rotate(360deg);
+    }
+    #min_button:hover {
+        transform: rotate(360deg);
+    }
+    `;
+    var style = document.createElement('style');
+
+    if (style.styleSheet) {
+        style.styleSheet.cssText = cssHoverEffects;
+    } else {
+        style.appendChild(document.createTextNode(cssHoverEffects));
+    }
+
+    document.getElementsByTagName('head')[0].appendChild(style);
+}
+
+const infoBox = document.createElement('div');
+infoBox.setAttribute("id", "infoBox");
+const minButton = document.createElement('button');
+const refreshButton = document.createElement('img');
+function init() {
     document.body.appendChild(infoBox);
+    document.body.appendChild(minButton);
+    document.body.appendChild(refreshButton);
 
     var lastURL = window.location.href;
     window.addEventListener("mousedown", async function(){
         console.log("CLICK!")
-        await sleep(400);
+        await sleep(1000);
         console.log(window.location.href)
         console.log(lastURL)
         if (window.location.href != lastURL) {
@@ -129,6 +215,7 @@ function necessaryWaitItems() {
 }
 
 if (getSubdirectory() != Subdirectory.INCOMPATIBLE) {
+    styleInfoBox();
     waitTilReady(necessaryWaitItems(), function () {
         var wait4 =
             function () {
@@ -151,7 +238,7 @@ function sleep(ms) {
 
 function updateInfoBox(detailsAndDate){
     //console.log("updating")
-    document.getElementById("infoBox").textContent = detailsAndDate.join();
+    document.getElementById("infoBox").querySelector('p').textContent = detailsAndDate.join();
 }
 
 
@@ -190,10 +277,13 @@ function rootAndJobsGetDatePosted(matchTarget) {
         //console.log(grepThis);
         if (grepThis.search(`"formattedLocation":`) == -1) {
             //console.log("ALERTING")
-            alert(`Uh oh!  Loading new content into the same page will not retrieve any new date posted info!\n SOL.  Best you can do now is open these postings in their own page or ` 
+            alert(`Uh oh!  Either you tried to look at a posting which dynamically loaded in, or there is simply a timing glitch.\n`
+            +`Best you can do is open these postings in a new tab to see their posting date, or.... ` 
             + strikeThrough("submit a PR") +
             ` write your own plugin because this is a steaming mess!`);
             document.body.removeChild(infoBox);
+            document.body.removeChild(minButton);
+            document.body.removeChild(refreshButton);
             return
         }
         //console.log(grepThis.search(`"company":`), grepThis.search(`"displayTitle":`),  grepThis.search(`"formattedLocation":`))
