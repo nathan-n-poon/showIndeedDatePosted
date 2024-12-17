@@ -5,9 +5,9 @@
 This is a plugin which displays the posting date for jobs on Indeed.  Such information is sent to the client browser, but is typically not displayed to the user.  Esentially, this plugin saves the user a search through the html source.
 
 This plugin works for the following Indeed endpoints:
-- Viewjob (https://ca.indeed.com/viewjob?....)
-- Jobs search results (https://ca.indeed.com/jobs?....)
-- The root index (eg: https://ca.indeed.com/).  Note that the plugin's functionality is severely limited on this endpoint.  The date posted information is only sent for the jobs which were initially loaded.  So those additional postings which are requisitioned by scrolling to the bottom of the page will not have their date posted info available, whilst the user stays on this page.  To view the date posted, please right click on the posting, and open the link in a new tab (this will bring you to the viewjob page)
+- Viewjob (`https://ca.indeed.com/viewjob?....`)
+- Jobs search results (`https://ca.indeed.com/jobs?....`)
+- The root index (eg: `https://ca.indeed.com/`).  Note that the plugin's functionality is severely limited on this endpoint.  The date posted information is only sent for the jobs which were initially loaded.  So those additional postings which are requisitioned by scrolling to the bottom of the page will not have their date posted info available, whilst the user stays on this page.  To view the date posted, please right click on the posting, and open the link in a new tab (this will bring you to the viewjob page)
 
 Note that this has only been tested for Firefox.
 
