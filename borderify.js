@@ -167,6 +167,7 @@ function styleInfoBox() {
     document.getElementsByTagName('head')[0].appendChild(style);
 }
 
+var alerted = false;
 const infoBox = document.createElement('div');
 infoBox.setAttribute("id", "infoBox");
 const minButton = document.createElement('button');
@@ -277,13 +278,16 @@ function rootAndJobsGetDatePosted(matchTarget) {
         //console.log(grepThis);
         if (grepThis.search(`"formattedLocation":`) == -1) {
             //console.log("ALERTING")
-            alert(`Uh oh!  Either you tried to look at a posting which dynamically loaded in, or there is simply a timing glitch.\n`
-            +`Best you can do is open these postings in a new tab to see their posting date, or.... ` 
-            + strikeThrough("submit a PR") +
-            ` write your own plugin because this is a steaming mess!`);
+            if (!alerted) {
+                alert(`Uh oh!  Either you tried to look at a posting which dynamically loaded in, or there is simply a timing glitch.\n`
+                    +`Best you can do is open these postings in a new tab to see their posting date, or.... ` 
+                    + strikeThrough("submit a PR") +
+                    ` write your own plugin because this is a steaming mess!`);
+            }
             document.body.removeChild(infoBox);
             document.body.removeChild(minButton);
             document.body.removeChild(refreshButton);
+            alerted = true;
             return
         }
         //console.log(grepThis.search(`"company":`), grepThis.search(`"displayTitle":`),  grepThis.search(`"formattedLocation":`))
