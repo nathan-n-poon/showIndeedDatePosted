@@ -173,6 +173,7 @@ infoBox.setAttribute("id", "infoBox");
 const minButton = document.createElement('button');
 const refreshButton = document.createElement('img');
 function init() {
+    console.log("init")
     document.body.appendChild(infoBox);
     document.body.appendChild(minButton);
     document.body.appendChild(refreshButton);
@@ -194,25 +195,42 @@ function init() {
 }
 
 console.log("HERE!")
-const companyWait  =  () => {return document.querySelector('[data-testid=inlineHeader-companyName]')};
+const companyWait  =  () => {
+    firstTry = document.querySelector('.jobsearch-JobInfoHeader-companyNameSimple')
+    if (!!firstTry) {
+        return firstTry
+    }
+    else {
+        return document.querySelector('.jobsearch-JobInfoHeader-companyNameLink')
+    }
+};
+const titleWait = () => {
+    return document.querySelector('[data-testid="simpler-jobTitle"]')
+};
+const locationWait = () => {
+    //wtf
+    firstTry = document.querySelector(`[data-testid=jobsearch-JobInfoHeader-companyLocation]`);
+    if(!!firstTry) {
+        return firstTry;
+    }
+    else {
+        return document.querySelector('[data-testid="job-location"]')
+    }
+};
+const deetsWait = () => {
+    let subDir = getSubdirectory();
+    if (subDir == Subdirectory.ROOT) {
+        return document.getElementById("job-full-details");
+    }
+    if (subDir == Subdirectory.JOBS) {
+        return document.getElementById("jobsearch-ViewjobPaneWrapper");
+    }
+    if (subDir == Subdirectory.VIEWJOB) {
+        return true;
+    }
+};
 function necessaryWaitItems() {
-    var wait1 = () => {return document.querySelector('[data-testid=jobsearch-JobInfoHeader-title]')};
-    var wait2 = companyWait;
-    var wait3 = () => {return document.querySelector(`[data-testid=inlineHeader-companyLocation]`)};
-    var wait5 = () => {
-        let subDir = getSubdirectory();
-        if (subDir == Subdirectory.ROOT) {
-            return document.getElementById("job-full-details");
-        }
-        if (subDir == Subdirectory.JOBS) {
-            return document.getElementById("jobsearch-ViewjobPaneWrapper");
-        }
-        if (subDir == Subdirectory.VIEWJOB) {
-            return true;
-        }
-    };
-
-    return [wait1, wait2, wait3, wait5];
+    return [companyWait, titleWait, locationWait, deetsWait];
 }
 
 if (getSubdirectory() != Subdirectory.INCOMPATIBLE) {
@@ -246,11 +264,12 @@ function updateInfoBox(detailsAndDate){
 // get the details of current spotlighted job posting
 // normalize and collate data
 function getSpotlightJobDetails() {
-    let titleContainer = document.querySelector('[data-testid=jobsearch-JobInfoHeader-title]').innerHTML;
+    console.log("indeed is a bastard")
+    // below comment is deprecated
     // <span>Title<span class="css-1b6omqv esbq1260"> - job post</span></span>
-    let title = extractValue(titleContainer, `<span>`, `<span`);
+    let title = titleWait().textContent;
 
-    let companyNameContainer1 = document.querySelector('[data-testid=inlineHeader-companyName]');
+    let companyNameContainer1 = companyWait();
     // <a href="privacy_destroying_link" ...>Company Name<svg etc></svg></a>
     var company = companyNameContainer1.textContent;
     //console.log("THE COMPANY IS: " + company)
@@ -259,7 +278,7 @@ function getSpotlightJobDetails() {
         company = company.slice(0, company.search(".css"))
     }
 
-    let location = document.querySelector('[data-testid=inlineHeader-companyLocation]').innerText;
+    let location = locationWait().innerText;
     
     return [title, company, location];
 }
@@ -274,6 +293,8 @@ function strikeThrough(text) {
 // requisite: order of fields is company, title, location, date
 function rootAndJobsGetDatePosted(matchTarget) {
     var grepThis = document.getElementById("mosaic-data").innerHTML;
+    console.log("match target is: " + matchTarget)
+
     while(true) {
         //console.log(grepThis);
         if (grepThis.search(`"formattedLocation":`) == -1) {
@@ -302,6 +323,7 @@ function rootAndJobsGetDatePosted(matchTarget) {
 
         let collatedDetails = [displayTitle, company, location];
         //console.log((matchTarget + "\n" +collatedDetails))
+        console.log(collatedDetails)
         if (checkSameJobRef(matchTarget, collatedDetails)) {
             break;
         }
@@ -312,6 +334,12 @@ function rootAndJobsGetDatePosted(matchTarget) {
 function checkSameJobRef(spotlightDetails, scriptExtractDetails) {
     normalizedSpotlightDetails = normalize(spotlightDetails);
     normalizedScriptExtractDetails = normalize(scriptExtractDetails)
+    console.log("holy")
+    console.log(spotlightDetails)
+    console.log(normalizedSpotlightDetails)
+    console.log("hell")
+
+
     let matchTitle = normalizedSpotlightDetails[0] == normalizedScriptExtractDetails[0];
     let matchCompany = normalizedSpotlightDetails[1] == normalizedScriptExtractDetails[1];
     let matchLocation = normalizedSpotlightDetails[2].search(normalizedScriptExtractDetails[2]) != -1;
