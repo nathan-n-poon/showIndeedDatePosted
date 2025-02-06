@@ -1,9 +1,3 @@
-//todo: for index and jobs, make reload every time url param changes
-
-function error(errMsg) {
-    alert(errMsg + " :(")
-}
-
 // "formattedLocation":"City, Province","
 let entryDelimiter = `","`;
 
@@ -14,12 +8,43 @@ const Subdirectory = Object.freeze({
     INCOMPATIBLE: Symbol("incompatible")
 });
 
+// util
+function error(errMsg) {
+    alert(errMsg + " :(")
+}
+
+function getSubdirectory() {
+    const url = window.location.href
+    if (url == `https://ca.indeed.com/` || 
+        url.search(`https://ca.indeed.com/\\?`) != -1
+    ) {
+        return Subdirectory.ROOT;
+    }
+    if (url.search(`https://ca.indeed.com/jobs`) != -1) {
+        return Subdirectory.JOBS;
+    }
+    if (url.search(`https://ca.indeed.com/viewjob`) != -1) {
+        return Subdirectory.VIEWJOB;
+    }
+    return Subdirectory.INCOMPATIBLE;
+}
 
 function extractValue(dict, leftBound, rightBound) {
     let leftIndex = dict.search(leftBound) + leftBound.length;
     let rightIndex = dict.slice(leftIndex).search(rightBound);
 
     return dict.slice(leftIndex, leftIndex+rightIndex);
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function strikeThrough(text) {
+    return text
+      .split('')
+      .map(char => char + '\u0336')
+      .join('')
 }
 
 function waitTilReady(firstWaitGroup, finallyExecute) {
@@ -37,20 +62,83 @@ function waitTilReady(firstWaitGroup, finallyExecute) {
     finallyExecute();
 }
 
-function getSubdirectory() {
-    const url = window.location.href
-    if (url == `https://ca.indeed.com/` || 
-        url.search(`https://ca.indeed.com/\\?`) != -1
-    ) {
-        return Subdirectory.ROOT;
+
+
+// entry
+var alerted = false;
+const infoBox = document.createElement('div');
+infoBox.setAttribute("id", "infoBox");
+const minButton = document.createElement('button');
+const refreshButton = document.createElement('img');
+function init() {
+    console.log("init")
+    document.body.appendChild(infoBox);
+    document.body.appendChild(minButton);
+    document.body.appendChild(refreshButton);
+
+    var lastURL = window.location.href;
+    window.addEventListener("mousedown", async function(){
+        console.log("CLICK!")
+        await sleep(1000);
+        console.log(window.location.href)
+        console.log(lastURL)
+        if (window.location.href != lastURL) {
+            console.log("registered update")
+            waitTilReady(necessaryWaitItems(), displayInfo);
+            lastURL = window.location.href
+        }
+    });
+
+    displayInfo();
+}
+
+console.log("HERE!")
+// firstTry: there are alternate forms which some elements can take
+// but these are also tentative probes for elements which may not exist at all, so none can be unwrapped
+// with .textCOntent, .innerHTML, etc...
+const companyWait  =  () => {
+    firstTry = document.querySelector('.jobsearch-JobInfoHeader-companyNameSimple')
+    if (firstTry) {
+        return firstTry
     }
-    if (url.search(`https://ca.indeed.com/jobs`) != -1) {
-        return Subdirectory.JOBS;
+    secondTry = document.querySelector('.jobsearch-JobInfoHeader-companyNameLink')
+    if (secondTry) {
+        return secondTry
     }
-    if (url.search(`https://ca.indeed.com/viewjob`) != -1) {
-        return Subdirectory.VIEWJOB;
+    thirdTry = document.querySelector('[data-testid="inlineHeader-companyName"]')
+    return thirdTry
+};
+const titleWait = () => {
+    firstTry = document.querySelector('[data-testid="simpler-jobTitle"]')
+    if (firstTry) {
+        return firstTry
     }
-    return Subdirectory.INCOMPATIBLE;
+    return document.querySelector('[data-testid="jobsearch-JobInfoHeader-title"]')
+};
+const locationWait = () => {
+    //wtf
+    firstTry = document.querySelector(`[data-testid=jobsearch-JobInfoHeader-companyLocation]`);
+    if(firstTry) {
+        return firstTry;
+    }
+    else {
+        return document.querySelector('[data-testid="job-location"]')
+    }
+};
+const deetsWait = () => {
+    let subDir = getSubdirectory();
+    if (subDir == Subdirectory.ROOT) {
+        return document.getElementById("job-full-details");
+    }
+    if (subDir == Subdirectory.JOBS) {
+        return document.getElementById("jobsearch-ViewjobPaneWrapper");
+    }
+    if (subDir == Subdirectory.VIEWJOB) {
+        return true;
+    }
+};
+function necessaryWaitItems() {
+    return [companyWait, titleWait, locationWait, deetsWait];
 }
 
 function displayInfo() {
@@ -167,72 +255,6 @@ function styleInfoBox() {
     document.getElementsByTagName('head')[0].appendChild(style);
 }
 
-var alerted = false;
-const infoBox = document.createElement('div');
-infoBox.setAttribute("id", "infoBox");
-const minButton = document.createElement('button');
-const refreshButton = document.createElement('img');
-function init() {
-    console.log("init")
-    document.body.appendChild(infoBox);
-    document.body.appendChild(minButton);
-    document.body.appendChild(refreshButton);
-
-    var lastURL = window.location.href;
-    window.addEventListener("mousedown", async function(){
-        console.log("CLICK!")
-        await sleep(1000);
-        console.log(window.location.href)
-        console.log(lastURL)
-        if (window.location.href != lastURL) {
-            console.log("registered update")
-            waitTilReady(necessaryWaitItems(), displayInfo);
-            lastURL = window.location.href
-        }
-    });
-
-    displayInfo();
-}
-
-console.log("HERE!")
-const companyWait  =  () => {
-    firstTry = document.querySelector('.jobsearch-JobInfoHeader-companyNameSimple')
-    if (!!firstTry) {
-        return firstTry
-    }
-    else {
-        return document.querySelector('.jobsearch-JobInfoHeader-companyNameLink')
-    }
-};
-const titleWait = () => {
-    return document.querySelector('[data-testid="simpler-jobTitle"]')
-};
-const locationWait = () => {
-    //wtf
-    firstTry = document.querySelector(`[data-testid=jobsearch-JobInfoHeader-companyLocation]`);
-    if(!!firstTry) {
-        return firstTry;
-    }
-    else {
-        return document.querySelector('[data-testid="job-location"]')
-    }
-};
-const deetsWait = () => {
-    let subDir = getSubdirectory();
-    if (subDir == Subdirectory.ROOT) {
-        return document.getElementById("job-full-details");
-    }
-    if (subDir == Subdirectory.JOBS) {
-        return document.getElementById("jobsearch-ViewjobPaneWrapper");
-    }
-    if (subDir == Subdirectory.VIEWJOB) {
-        return true;
-    }
-};
-function necessaryWaitItems() {
-    return [companyWait, titleWait, locationWait, deetsWait];
-}
-
 if (getSubdirectory() != Subdirectory.INCOMPATIBLE) {
     styleInfoBox();
     waitTilReady(necessaryWaitItems(), function () {
@@ -248,11 +270,6 @@ if (getSubdirectory() != Subdirectory.INCOMPATIBLE) {
         console.log("HERE 2!")
         waitTilReady([wait4], init);
     });
-}
-
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function updateInfoBox(detailsAndDate){
@@ -282,13 +299,6 @@ function getSpotlightJobDetails() {
     
     return [title, company, location];
 }
-
-function strikeThrough(text) {
-    return text
-      .split('')
-      .map(char => char + '\u0336')
-      .join('')
-  }
 
 // requisite: order of fields is company, title, location, date
 function rootAndJobsGetDatePosted(matchTarget) {
@@ -347,6 +357,7 @@ function checkSameJobRef(spotlightDetails, scriptExtractDetails) {
     return matchTitle && matchCompany && matchLocation;
 }
 
+// mabe defines at top
 function viewJobGetDatePosted() {
     let source = document.body.innerHTML;
     let postedDate = extractValue(source, `"age":`, entryDelimiter);
