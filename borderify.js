@@ -303,7 +303,8 @@ function getSpotlightJobDetails() {
 // requisite: order of fields is company, title, location, date
 function rootAndJobsGetDatePosted(matchTarget) {
     var grepThis = document.getElementById("mosaic-data").innerHTML;
-    console.log("match target is: " + matchTarget)
+    console.log("match target is: ")
+    console.log(matchTarget)
 
     while(true) {
         //console.log(grepThis);
@@ -342,17 +343,19 @@ function rootAndJobsGetDatePosted(matchTarget) {
 }
 
 function checkSameJobRef(spotlightDetails, scriptExtractDetails) {
-    normalizedSpotlightDetails = normalize(spotlightDetails);
-    normalizedScriptExtractDetails = normalize(scriptExtractDetails)
+    let normalizedSpotlightDetails = normalize(spotlightDetails);
+    let normalizedScriptExtractDetails = normalize(scriptExtractDetails)
     console.log("holy")
-    console.log(spotlightDetails)
     console.log(normalizedSpotlightDetails)
-    console.log("hell")
+    console.log(normalizedScriptExtractDetails)
 
-
-    let matchTitle = normalizedSpotlightDetails[0] == normalizedScriptExtractDetails[0];
+    // why
+    let matchTitle = (normalizedSpotlightDetails[0] == normalizedScriptExtractDetails[0]) || 
+                        (normalizedSpotlightDetails[0] == (normalizedScriptExtractDetails[0] + " - job post"));
     let matchCompany = normalizedSpotlightDetails[1] == normalizedScriptExtractDetails[1];
     let matchLocation = normalizedSpotlightDetails[2].search(normalizedScriptExtractDetails[2]) != -1;
+    console.log(matchTitle, matchCompany, matchLocation)
+    console.log("hell")
 
     return matchTitle && matchCompany && matchLocation;
 }
