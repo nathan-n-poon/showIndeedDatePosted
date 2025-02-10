@@ -13,7 +13,6 @@ Note that this has only been tested for Firefox.
 
  attribution: https://commons.wikimedia.org/wiki/File:Refresh_icon.png for refresh icon
 
- !["chill guy, by Philip Banks"](chillguy/Chill_guy_original_artwork.jpg "chill guy, by Philip Banks")
 
  > In the souls of the people the grapes of wrath are filling and growing heavy, growing heavy for the vintage.
 
