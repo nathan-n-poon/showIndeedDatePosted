@@ -39,18 +39,12 @@ function strikeThrough(text) {
 
 function waitTilReady(waitGroup, finallyExecute) {
     var ready = true;
-    // console.log(waitGroup)
 
     for (let waitItem of waitGroup) {
-        // console.log("boopis")
-        // console.log(waitItem())
         x = !!waitItem()
-        console.log(x)
         ready &= x;
     }
-    console.log(ready)
     if (!ready) {
-        //console.log("waiting")
         infoBox.querySelector('p').textContent = "loading";
         window.setTimeout(function(){waitTilReady(waitGroup, finallyExecute)}, 500);
         return;
@@ -77,17 +71,12 @@ const deetsWait = () => {
 // with .textCOntent, .innerHTML, etc...
 function isElementAvailable(altParams) {
     var a = null;
-    console.log(altParams[0])
     for (let alt of altParams) {
-        // console.log(alt)
         a = document.querySelector(alt)
-        // console.log(a)
         if (!!a) {
-            console.log("returning " + !!a)
             return a
         }
     }
-    console.log("returning " + !!a)
     return a;
 }
 
@@ -98,13 +87,9 @@ function necessaryWaitItems() {
             deetsWait];
 }
 
-// for some reason some characters are alternatingly encoded either directly or as unicode id
-// so far all I have found is slash '/'
-// cant be bothered to figure out where it occurs so imma equally apply this on everything
-function normalize(input) {
-    ret = []
-    for (var i = 0; i < input.length; i++) {
-        ret.push(input[i].replaceAll('\\u002', '\/').replaceAll('&amp;', '&'))
+const threatLevel = 0
+function debugLog(msg, level) {
+    if (level < threatLevel) {
+        console.log(msg)
     }
-    return ret
 }

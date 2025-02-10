@@ -12,7 +12,7 @@
     "content_scripts": [
       {
         "matches": ["https://ca.indeed.com/*", "https://ca.indeed.com/viewjob*", "https://www.mozilla.org/en-US/"],
-        "js": ["scripts/consts.js", "scripts/util.js", "scripts/rootAndJobs.js", "scripts/viewJob.js", "scripts/main.js"]
+        "js": ["scripts/consts.js", "scripts/styles.js", "scripts/util.js", "scripts/rootAndJobs.js", "scripts/viewJob.js", "scripts/main.js"]
       }
     ],
 
