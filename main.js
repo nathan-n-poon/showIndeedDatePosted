@@ -1,75 +1,9 @@
-// "formattedLocation":"City, Province","
-let entryDelimiter = `","`;
-
-const Subdirectory = Object.freeze({
-    ROOT:   Symbol("root"),
-    JOBS:  Symbol("job"),
-    VIEWJOB: Symbol("viewjob"),
-    INCOMPATIBLE: Symbol("incompatible")
-});
-
-// util
-function error(errMsg) {
-    alert(errMsg + " :(")
-}
-
-function getSubdirectory() {
-    const url = window.location.href
-    if (url == `https://ca.indeed.com/` || 
-        url.search(`https://ca.indeed.com/\\?`) != -1
-    ) {
-        return Subdirectory.ROOT;
-    }
-    if (url.search(`https://ca.indeed.com/jobs`) != -1) {
-        return Subdirectory.JOBS;
-    }
-    if (url.search(`https://ca.indeed.com/viewjob`) != -1) {
-        return Subdirectory.VIEWJOB;
-    }
-    return Subdirectory.INCOMPATIBLE;
-}
-
-function extractValue(dict, leftBound, rightBound) {
-    let leftIndex = dict.search(leftBound) + leftBound.length;
-    let rightIndex = dict.slice(leftIndex).search(rightBound);
-
-    return dict.slice(leftIndex, leftIndex+rightIndex);
-}
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function strikeThrough(text) {
-    return text
-      .split('')
-      .map(char => char + '\u0336')
-      .join('')
-}
-
-function waitTilReady(firstWaitGroup, finallyExecute) {
-    var ready = true;
-    for (let waitItem of firstWaitGroup) {
-        //console.log(waitItem())
-        ready &= !!waitItem();
-    }
-    if (!ready) {
-        //console.log("waiting")
-        infoBox.querySelector('p').textContent = "loading";
-        window.setTimeout(function(){waitTilReady(firstWaitGroup, finallyExecute)}, 500);
-        return;
-    }
-    finallyExecute();
-}
-
-
-
-// entry
 var alerted = false;
 const infoBox = document.createElement('div');
 infoBox.setAttribute("id", "infoBox");
 const minButton = document.createElement('button');
 const refreshButton = document.createElement('img');
+
 function init() {
     console.log("init")
     document.body.appendChild(infoBox);
@@ -92,39 +26,25 @@ function init() {
     displayInfo();
 }
 
-console.log("HERE!")
-// firstTry: there are alternate forms which some elements can take
-// but these are also tentative probes for elements which may not exist at all, so none can be unwrapped
+// There are alternate forms which some elements can take.
+// But these are also tentative probes for elements which may not exist at all, so none can be unwrapped
 // with .textCOntent, .innerHTML, etc...
-const companyWait  =  () => {
-    firstTry = document.querySelector('.jobsearch-JobInfoHeader-companyNameSimple')
-    if (firstTry) {
-        return firstTry
+function isElementAvailable(altParams) {
+    var a = null;
+    console.log(altParams[0])
+    for (let alt of altParams) {
+        // console.log(alt)
+        a = document.querySelector(alt)
+        // console.log(a)
+        if (!!a) {
+            console.log("returning " + !!a)
+            return a
+        }
     }
-    secondTry = document.querySelector('.jobsearch-JobInfoHeader-companyNameLink')
-    if (secondTry) {
-        return secondTry
-    }
-    thirdTry = document.querySelector('[data-testid="inlineHeader-companyName"]')
-    return thirdTry
-};
-const titleWait = () => {
-    firstTry = document.querySelector('[data-testid="simpler-jobTitle"]')
-    if (firstTry) {
-        return firstTry
-    }
-    return document.querySelector('[data-testid="jobsearch-JobInfoHeader-title"]')
-};
-const locationWait = () => {
-    //wtf
-    firstTry = document.querySelector(`[data-testid=jobsearch-JobInfoHeader-companyLocation]`);
-    if(firstTry) {
-        return firstTry;
-    }
-    else {
-        return document.querySelector('[data-testid="job-location"]')
-    }
-};
+    console.log("returning " + !!a)
+    return a;
+}
+
 const deetsWait = () => {
     let subDir = getSubdirectory();
     if (subDir == Subdirectory.ROOT) {
@@ -138,7 +58,10 @@ const deetsWait = () => {
     }
 };
 function necessaryWaitItems() {
-    return [companyWait, titleWait, locationWait, deetsWait];
+    return [() => {return isElementAvailable(companyAltParams)}, 
+            () => {return isElementAvailable(titleAltParams)},
+            () => {return isElementAvailable(locationAltParams)}, 
+            deetsWait];
 }
 
 function displayInfo() {
@@ -261,7 +184,7 @@ if (getSubdirectory() != Subdirectory.INCOMPATIBLE) {
         var wait4 =
             function () {
                 //console.log("IN 4!!!!!!")
-                var wait = companyWait().textContent;
+                var wait = isElementAvailable(companyAltParams).textContent;
                 if (wait.search(".css") != -1) {
                     wait = wait.slice(0, wait.search(".css"))
                 }
@@ -284,9 +207,9 @@ function getSpotlightJobDetails() {
     console.log("indeed is a bastard")
     // below comment is deprecated
     // <span>Title<span class="css-1b6omqv esbq1260"> - job post</span></span>
-    let title = titleWait().textContent;
+    let title = isElementAvailable(titleAltParams).textContent;
 
-    let companyNameContainer1 = companyWait();
+    let companyNameContainer1 = isElementAvailable(companyAltParams);
     // <a href="privacy_destroying_link" ...>Company Name<svg etc></svg></a>
     var company = companyNameContainer1.textContent;
     //console.log("THE COMPANY IS: " + company)
@@ -295,7 +218,7 @@ function getSpotlightJobDetails() {
         company = company.slice(0, company.search(".css"))
     }
 
-    let location = locationWait().innerText;
+    let location = isElementAvailable(locationAltParams).innerText;
     
     return [title, company, location];
 }
