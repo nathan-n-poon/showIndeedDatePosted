@@ -1,6 +1,6 @@
 // util
 function error(errMsg) {
-    alert(errMsg + " :(")
+    alert(errMsg + ' :(')
 }
 
 function getSubdirectory() {
@@ -45,7 +45,7 @@ function waitTilReady(waitGroup, finallyExecute) {
         ready &= x;
     }
     if (!ready) {
-        infoBox.querySelector('p').textContent = "loading";
+        infoBox.querySelector('p').textContent = 'loading';
         window.setTimeout(function(){waitTilReady(waitGroup, finallyExecute)}, 500);
         return;
     }
@@ -56,10 +56,10 @@ function waitTilReady(waitGroup, finallyExecute) {
 const deetsWait = () => {
     let subDir = getSubdirectory();
     if (subDir == Subdirectory.ROOT) {
-        return document.getElementById("job-full-details");
+        return document.getElementById('job-full-details');
     }
     if (subDir == Subdirectory.JOBS) {
-        return document.getElementById("jobsearch-ViewjobPaneWrapper");
+        return document.getElementById('jobsearch-ViewjobPaneWrapper');
     }
     if (subDir == Subdirectory.VIEWJOB) {
         return true;
@@ -89,7 +89,7 @@ function necessaryWaitItems() {
 
 const threatLevel = 0
 function debugLog(msg, level) {
-    if (level < threatLevel) {
+    if (level <= threatLevel) {
         console.log(msg)
     }
 }

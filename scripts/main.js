@@ -4,7 +4,7 @@ var buttonState = true;
 
 // html elems
 const infoBox = document.createElement('div');
-infoBox.setAttribute("id", "infoBox");
+infoBox.setAttribute('id', 'infoBox');
 const minButton = document.createElement('button');
 const refreshButton = document.createElement('img');
 
@@ -13,21 +13,24 @@ function main() {
     if (getSubdirectory() != Subdirectory.INCOMPATIBLE) {
         styleInfoBox();
         waitTilReady(necessaryWaitItems(), function () {
-            var wait4 =
+            // so when at the /jobs/ endpoint for some *****ing reason the company name will load and then ???
+            // disappear??? only to come back soon after.  So with this setup, we wait for the necessary details
+            // (including company name) to initially load, and then wait for company name again
+            // should esentially be a no-op for endpoints other than /job/
+            var companyWaitAgain =
                 function () {
                     var wait = isElementAvailable(companyAltParams).textContent;
                     // prunes the svg sometimes appended to the company name
                     // the svg is a link icon to indicate a comapny profile page
-                    if (wait.search(".css") != -1) {
-                        wait = wait.slice(0, wait.search(".css"))
+                    if (wait.search('.css') != -1) {
+                        wait = wait.slice(0, wait.search('.css'))
                     }
                     return wait;
             };
-            waitTilReady([wait4], init);
+            waitTilReady([companyWaitAgain], init);
         });
     }
 }
-
 
 function init() {
     document.body.appendChild(infoBox);
@@ -35,7 +38,8 @@ function init() {
     document.body.appendChild(refreshButton);
 
     var lastURL = window.location.href;
-    window.addEventListener("mousedown", async function(){
+    refreshButton.addEventListener('click', async function(){
+        debugLog('clicked refresh!', 0);
         await sleep(1000);
         if (window.location.href != lastURL) {
             waitTilReady(necessaryWaitItems(), displayInfo);
@@ -62,7 +66,7 @@ function displayInfo() {
         detailsAndDate = viewJobGetDatePosted();
     } 
     else {
-        error("cant work on this page");
+        error('cant work on this page');
     }
 
     updateInfoBox(normalize(detailsAndDate));
@@ -70,35 +74,35 @@ function displayInfo() {
 
 function styleInfoBox() {
     let text = document.createElement('p');
-    text.style.color = "white";
+    text.style.color = 'white';
     infoBox.appendChild(text);
 
     infoBox.style.cssText = infoBoxCss;
 
-    minButton.setAttribute("id", "min_button");
+    minButton.setAttribute('id', 'min_button');
     minButton.style.cssText = minButtonCss;
 
     const buttonIcon = document.createElement('span');
-    buttonIcon.textContent = "-";
+    buttonIcon.textContent = '-';
     buttonIcon.style.cssText = buttonIconCss
 
-    minButton.addEventListener("click", () => {
+    minButton.addEventListener('click', () => {
         buttonState = !buttonState;
         if (buttonState) {
-            infoBox.style.display = "block";
-            refreshButton.style.display = "block";
-            buttonIcon.textContent = "-"
+            infoBox.style.display = 'block';
+            refreshButton.style.display = 'block';
+            buttonIcon.textContent = '-'
         } else {
-            infoBox.style.display = "none"
-            refreshButton.style.display = "none"
-            buttonIcon.textContent = "+"
+            infoBox.style.display = 'none'
+            refreshButton.style.display = 'none'
+            buttonIcon.textContent = '+'
         }
     })
 
     minButton.appendChild(buttonIcon)
 
-    refreshButton.setAttribute("id", "refresh_button") 
-    refreshButton.src = browser.runtime.getURL("icons/refresh.png")
+    refreshButton.setAttribute('id', 'refresh_button') 
+    refreshButton.src = browser.runtime.getURL('icons/refresh.png')
     refreshButton.style.cssText = refreshButtonCss;
 
     const cssHoverEffects = refreshButtonHoverCss
@@ -115,5 +119,5 @@ function styleInfoBox() {
 }
 
 function updateInfoBox(detailsAndDate){
-    document.getElementById("infoBox").querySelector('p').textContent = detailsAndDate.join();
+    document.getElementById('infoBox').querySelector('p').textContent = detailsAndDate.join();
 }

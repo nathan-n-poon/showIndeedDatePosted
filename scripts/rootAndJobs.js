@@ -9,8 +9,8 @@ function getSpotlightJobDetails() {
     // <a href="privacy_destroying_link" ...>Company Name<svg etc></svg></a>
     var company = companyNameContainer1.textContent;
     // let company = extractValue(companyNameContainer2, "", `<svg`);
-    if (company.search(".css") != -1) {
-        company = company.slice(0, company.search(".css"))
+    if (company.search('.css') != -1) {
+        company = company.slice(0, company.search('.css'))
     }
 
     let location = isElementAvailable(locationAltParams).innerText;
@@ -20,7 +20,7 @@ function getSpotlightJobDetails() {
 
 // requisite: order of fields is company, title, location, date
 function rootAndJobsGetDatePosted(matchTarget) {
-    var grepThis = document.getElementById("mosaic-data").innerHTML;
+    var grepThis = document.querySelector(rootAndJobsMetaDataTag).innerHTML;
 
 
     while(true) {
@@ -28,7 +28,7 @@ function rootAndJobsGetDatePosted(matchTarget) {
             if (!alerted) {
                 alert(`Uh oh!  Either you tried to look at a posting which dynamically loaded in, or there is simply a timing glitch.\n`
                     +`Best you can do is open these postings in a new tab to see their posting date, or.... ` 
-                    + strikeThrough("submit a PR") +
+                    + strikeThrough('submit a PR') +
                     ` write your own plugin because this is a steaming mess!`);
             }
             document.body.removeChild(infoBox);
@@ -59,7 +59,7 @@ function checkSameJobRef(spotlightDetails, scriptExtractDetails) {
 
     // why
     let matchTitle = (normalizedSpotlightDetails[0] == normalizedScriptExtractDetails[0]) || 
-                        (normalizedSpotlightDetails[0] == (normalizedScriptExtractDetails[0] + " - job post"));
+                        (normalizedSpotlightDetails[0] == (normalizedScriptExtractDetails[0] + ' - job post'));
     let matchCompany = normalizedSpotlightDetails[1] == normalizedScriptExtractDetails[1];
     let matchLocation = normalizedSpotlightDetails[2].search(normalizedScriptExtractDetails[2]) != -1;
 
